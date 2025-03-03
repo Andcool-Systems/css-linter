@@ -103,7 +103,6 @@ fn main() -> Result<()> {
 
     let mut files_count = 0;
     let mut errors_count = 0;
-    println!(); // Initial spacing
 
     for (css_file, mut classes) in defined_classnames {
         if let Some(used_css) = used_classnames.get(&css_file) {
