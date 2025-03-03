@@ -1,0 +1,146 @@
+use std::{
+    collections::{HashMap, HashSet},
+    env, fs,
+    path::{Path, PathBuf},
+    process,
+};
+
+use anyhow::Result;
+use config::get_compiler_options;
+use css_parser::{extract_classes, ClassName};
+use tsx_parser::{extract_default_css_imports, extract_used_classes};
+use utils::{process_relative_import, replace_aliases};
+
+mod config;
+mod css_parser;
+mod tsx_parser;
+mod utils;
+
+fn list_files_in_directory(path: PathBuf, exclude: Vec<String>) -> Vec<String> {
+    let mut files = Vec::new();
+
+    if let Ok(entries) = fs::read_dir(&path) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+
+            if path.is_dir() {
+                if let Some(p) = path.file_name() {
+                    let p_str = p.to_string_lossy();
+                    if p_str.starts_with('.') || exclude.iter().any(|i| p_str == *i) {
+                        continue;
+                    }
+                }
+                files.extend(list_files_in_directory(path, exclude.clone()));
+            } else if path.is_file() {
+                if let Some(path_str) = path.to_str() {
+                    files.push(path_str.to_string());
+                }
+            }
+        }
+    } else {
+        eprintln!("Cannot open target dir: {:?}", path);
+    }
+
+    files
+}
+
+fn main() -> Result<()> {
+    const COLOR_BLUE: &str = "\x1b[34m";
+    const COLOR_YELLOW: &str = "\x1b[33m";
+    const COLOR_GREEN: &str = "\x1b[32m";
+    const COLOR_RED: &str = "\x1b[31m";
+    const COLOR_RESET: &str = "\u{001B}[0m";
+
+    let args: Vec<String> = env::args().collect();
+    let path = args.get(1).unwrap_or_else(|| {
+        eprintln!(
+            "\n{}Error{}: Linting path must be specified",
+            COLOR_RED, COLOR_RESET
+        );
+        process::exit(1);
+    });
+
+    if let Err(e) = env::set_current_dir(Path::new(path)) {
+        eprintln!(
+            "\n{}Error{}: Failed to set current directory: {}",
+            COLOR_RED, COLOR_RESET, e
+        );
+        process::exit(1);
+    }
+    let tsconfig = get_compiler_options();
+
+    let dir = list_files_in_directory(Path::new(".").to_path_buf(), tsconfig.exclude);
+
+    let mut used_classnames: HashMap<String, HashSet<String>> = Default::default();
+    let mut defined_classnames: HashMap<String, HashSet<ClassName>> = Default::default();
+
+    for entry in &dir {
+        let path = entry.replace("\\", "/");
+
+        if path.ends_with(".tsx") {
+            let code = fs::read_to_string(entry)?;
+            let imported_css = extract_default_css_imports(&code);
+
+            for (mut style_path, class_names) in imported_css {
+                process_relative_import(Path::new(entry), &mut style_path)?;
+                replace_aliases(&mut style_path, tsconfig.compiler_options.paths.clone());
+
+                let used_fields = extract_used_classes(&code, &class_names);
+                used_classnames
+                    .entry(style_path)
+                    .or_insert_with(HashSet::new)
+                    .extend(used_fields);
+            }
+        } else if path.ends_with(".module.css") {
+            let code = fs::read_to_string(entry)?;
+            let classes = extract_classes(&code);
+            defined_classnames
+                .entry(path)
+                .or_insert_with(HashSet::new)
+                .extend(classes);
+        }
+    }
+
+    let mut files_count = 0;
+    let mut errors_count = 0;
+    println!(); // Initial spacing
+
+    for (css_file, mut classes) in defined_classnames {
+        if let Some(used_css) = used_classnames.get(&css_file) {
+            classes.retain(|v| !used_css.contains(&v.class_name));
+        }
+
+        if classes.is_empty() {
+            continue;
+        }
+
+        files_count += 1;
+        errors_count += classes.len();
+
+        println!("{}{}{}", COLOR_BLUE, css_file, COLOR_RESET);
+        for extra in classes {
+            println!(
+                "{}{}:{}  {}Warn{}: Unused class `{}` found",
+                COLOR_YELLOW,
+                extra.line_index + 1,
+                extra.column_index + 1,
+                COLOR_YELLOW,
+                COLOR_RESET,
+                extra.class_name
+            );
+        }
+
+        println!();
+    }
+
+    if errors_count == 0 {
+        println!("{}✔{} No CSS lint warnings found", COLOR_GREEN, COLOR_RESET);
+    } else {
+        println!(
+            "Found {}{} warnings{} in {} files",
+            COLOR_YELLOW, errors_count, COLOR_RESET, files_count
+        );
+    }
+
+    Ok(())
+}
