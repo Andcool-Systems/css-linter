@@ -39,7 +39,7 @@ jobs:
       - name: Rename binary
         run: |
           mkdir -p artifacts
-          cp target/${{ matrix.target }}/release/css-linter${{ matrix.bin_suffix }} artifacts/
+          cp target/${{ matrix.target }}/release/css-linter${{ matrix.bin_suffix }} artifacts/css-linter-${{ matrix.short }}
         shell: bash
 
       - name: Upload artifact
