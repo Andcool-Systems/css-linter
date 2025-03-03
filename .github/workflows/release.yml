@@ -22,7 +22,7 @@ jobs:
             bin_suffix: ""
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            short: windows
+            short: win
             bin_suffix: ".exe"
     steps:
       - name: Checkout repository
@@ -39,7 +39,7 @@ jobs:
       - name: Rename binary
         run: |
           mkdir -p artifacts
-          cp target/${{ matrix.target }}/release/css-linter${{ matrix.bin_suffix }} artifacts/css-linter-${{ matrix.short }}
+          cp target/${{ matrix.target }}/release/css-linter${{ matrix.bin_suffix }} artifacts/css-linter-${{ matrix.short }}${{ matrix.bin_suffix }}
         shell: bash
 
       - name: Upload artifact
