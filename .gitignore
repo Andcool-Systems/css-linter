@@ -1,4 +1,4 @@
 .vscode
 target
 Cargo.lock
-npm-package
+npm-package/src/bin
