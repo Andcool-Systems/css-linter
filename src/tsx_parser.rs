@@ -4,7 +4,7 @@ use swc_ecma_ast::{ImportSpecifier, Module, ModuleDecl};
 use swc_ecma_parser::{Parser, StringInput, Syntax, TsSyntax};
 use swc_ecma_visit::{Visit, VisitWith};
 
-pub fn module_parser(tsx_code: &str) -> Module {
+pub fn module_parser(tsx_code: &str) -> (Module, Lrc<SourceMap>) {
     let cm: Lrc<SourceMap> = Default::default();
     let fm = cm.new_source_file(FileName::Custom("input.tsx".into()).into(), tsx_code.into());
 
@@ -18,12 +18,22 @@ pub fn module_parser(tsx_code: &str) -> Module {
 
     let mut parser = Parser::new(syntax, StringInput::from(&*fm), None);
 
-    parser.parse_module().expect("Failed to parse")
+    (parser.parse_module().expect("Failed to parse"), cm)
+}
+
+#[derive(Eq, PartialEq, Hash, Debug)]
+pub struct UsedClassName {
+    pub class_name: String,
+    pub file_name: String,
+    pub line: usize,
+    pub column: usize,
 }
 
 struct PropertyFinder {
     variable_name: String,
-    properties: HashSet<String>,
+    file_name: String,
+    properties: HashSet<UsedClassName>,
+    source_map: Lrc<SourceMap>,
 }
 
 impl Visit for PropertyFinder {
@@ -31,7 +41,13 @@ impl Visit for PropertyFinder {
         if let swc_ecma_ast::Expr::Ident(ref obj) = *node.obj {
             if obj.sym == self.variable_name {
                 if let swc_ecma_ast::MemberProp::Ident(ref prop) = node.prop {
-                    self.properties.insert(prop.sym.to_string());
+                    let loc = self.source_map.lookup_char_pos(node.span.lo());
+                    self.properties.insert(UsedClassName {
+                        class_name: prop.sym.to_string(),
+                        file_name: self.file_name.clone(),
+                        line: loc.line,
+                        column: loc.col.0,
+                    });
                 }
             }
         }
@@ -40,12 +56,18 @@ impl Visit for PropertyFinder {
     }
 }
 
-pub fn extract_used_classes(tsx_code: &str, variable_name: &str) -> HashSet<String> {
-    let module = module_parser(tsx_code);
+pub fn extract_used_classes(
+    tsx_code: &str,
+    variable_name: &str,
+    file_name: String,
+) -> HashSet<UsedClassName> {
+    let (module, source_map) = module_parser(tsx_code);
 
     let mut finder = PropertyFinder {
         variable_name: variable_name.to_string(),
+        file_name,
         properties: HashSet::new(),
+        source_map: source_map.clone(),
     };
 
     module.visit_with(&mut finder);
@@ -77,7 +99,7 @@ impl Visit for DefaultCssImportFinder {
 }
 
 pub fn extract_default_css_imports(tsx_code: &str) -> HashSet<(String, String)> {
-    let module = module_parser(tsx_code);
+    let (module, _) = module_parser(tsx_code);
 
     let mut finder = DefaultCssImportFinder {
         imported_variables: HashSet::new(),

@@ -8,7 +8,7 @@ use std::{
 use anyhow::Result;
 use config::get_compiler_options;
 use css_parser::{extract_classes, ClassName};
-use tsx_parser::{extract_default_css_imports, extract_used_classes};
+use tsx_parser::{extract_default_css_imports, extract_used_classes, UsedClassName};
 use utils::{process_relative_import, replace_aliases};
 
 mod config;
@@ -71,7 +71,7 @@ fn main() -> Result<()> {
 
     let dir = list_files_in_directory(Path::new(".").to_path_buf(), tsconfig.exclude);
 
-    let mut used_classnames: HashMap<String, HashSet<String>> = Default::default();
+    let mut used_classnames: HashMap<String, HashSet<UsedClassName>> = Default::default();
     let mut defined_classnames: HashMap<String, HashSet<ClassName>> = Default::default();
 
     for entry in &dir {
@@ -85,7 +85,7 @@ fn main() -> Result<()> {
                 process_relative_import(Path::new(entry), &mut style_path)?;
                 replace_aliases(&mut style_path, tsconfig.compiler_options.paths.clone());
 
-                let used_fields = extract_used_classes(&code, &class_names);
+                let used_fields = extract_used_classes(&code, &class_names, path.clone());
                 used_classnames
                     .entry(style_path)
                     .or_insert_with(HashSet::new)
@@ -104,9 +104,43 @@ fn main() -> Result<()> {
     let mut files_count = 0;
     let mut errors_count = 0;
 
-    for (css_file, mut classes) in defined_classnames {
+    for (css_file, mut classes_tsx) in defined_classnames.clone() {
         if let Some(used_css) = used_classnames.get(&css_file) {
-            classes.retain(|v| !used_css.contains(&v.class_name));
+            let used_css_flatten: Vec<String> =
+                used_css.iter().map(|v| v.class_name.clone()).collect();
+            classes_tsx.retain(|v| !used_css_flatten.contains(&v.class_name));
+        }
+
+        if classes_tsx.is_empty() {
+            continue;
+        }
+
+        files_count += 1;
+        errors_count += classes_tsx.len();
+
+        println!("{}{}{}", COLOR_BLUE, css_file, COLOR_RESET);
+        for extra in classes_tsx {
+            println!(
+                "{}{}:{}  {}Warn{}: Unused class `{}` found",
+                COLOR_YELLOW,
+                extra.line_index + 1,
+                extra.column_index + 1,
+                COLOR_YELLOW,
+                COLOR_RESET,
+                extra.class_name
+            );
+        }
+
+        println!();
+    }
+
+    let mut undefined_classes: HashMap<String, HashSet<UsedClassName>> = HashMap::new();
+
+    for (tsx_file, mut classes) in used_classnames {
+        if let Some(defined_css) = defined_classnames.get(&tsx_file) {
+            let defined_css: HashSet<String> =
+                defined_css.iter().map(|v| v.class_name.clone()).collect();
+            classes.retain(|v| !defined_css.contains(v.class_name.as_str()));
         }
 
         if classes.is_empty() {
@@ -116,13 +150,22 @@ fn main() -> Result<()> {
         files_count += 1;
         errors_count += classes.len();
 
-        println!("{}{}{}", COLOR_BLUE, css_file, COLOR_RESET);
         for extra in classes {
+            undefined_classes
+                .entry(extra.file_name.clone())
+                .or_insert_with(HashSet::new)
+                .insert(extra);
+        }
+    }
+
+    for undefined in undefined_classes {
+        println!("{}{}{}", COLOR_BLUE, undefined.0, COLOR_RESET);
+        for extra in undefined.1 {
             println!(
-                "{}{}:{}  {}Warn{}: Unused class `{}` found",
+                "{}{}:{}  {}Warn{}: Undefined class `{}` used",
                 COLOR_YELLOW,
-                extra.line_index + 1,
-                extra.column_index + 1,
+                extra.line,
+                extra.column + 1,
                 COLOR_YELLOW,
                 COLOR_RESET,
                 extra.class_name
