@@ -87,13 +87,21 @@ fn main() -> Result<()> {
 
         if path.ends_with(".tsx") {
             let code = fs::read_to_string(entry)?;
-            let imported_css = extract_default_css_imports(&code);
+            let imported_css = extract_default_css_imports(&code).unwrap_or_else(|e| {
+                eprintln!("Could not parse file: {}\n{}", entry, e);
+                process::exit(1);
+            });
 
             for (mut style_path, class_names) in imported_css {
                 process_relative_import(Path::new(entry), &mut style_path)?;
                 replace_aliases(&mut style_path, tsconfig.compiler_options.paths.clone());
 
-                let used_fields = extract_used_classes(&code, &class_names, path.clone());
+                let used_fields = extract_used_classes(&code, &class_names, path.clone())
+                    .unwrap_or_else(|e| {
+                        eprintln!("Could not parse file: {}\n{}", entry, e);
+                        process::exit(1);
+                    });
+
                 used_classnames
                     .entry(style_path)
                     .or_insert_with(HashSet::new)

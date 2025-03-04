@@ -4,7 +4,7 @@ use swc_ecma_ast::{ImportSpecifier, Module, ModuleDecl};
 use swc_ecma_parser::{Parser, StringInput, Syntax, TsSyntax};
 use swc_ecma_visit::{Visit, VisitWith};
 
-pub fn module_parser(tsx_code: &str) -> (Module, Lrc<SourceMap>) {
+pub fn module_parser(tsx_code: &str) -> anyhow::Result<(Module, Lrc<SourceMap>)> {
     let cm: Lrc<SourceMap> = Default::default();
     let fm = cm.new_source_file(FileName::Custom("input.tsx".into()).into(), tsx_code.into());
 
@@ -18,7 +18,10 @@ pub fn module_parser(tsx_code: &str) -> (Module, Lrc<SourceMap>) {
 
     let mut parser = Parser::new(syntax, StringInput::from(&*fm), None);
 
-    (parser.parse_module().expect("Failed to parse"), cm)
+    let parse_res = parser
+        .parse_module()
+        .map_err(|e| anyhow::Error::msg(e.kind().msg()))?;
+    Ok((parse_res, cm))
 }
 
 #[derive(Eq, PartialEq, Hash, Debug)]
@@ -60,8 +63,8 @@ pub fn extract_used_classes(
     tsx_code: &str,
     variable_name: &str,
     file_name: String,
-) -> HashSet<UsedClassName> {
-    let (module, source_map) = module_parser(tsx_code);
+) -> anyhow::Result<HashSet<UsedClassName>> {
+    let (module, source_map) = module_parser(tsx_code)?;
 
     let mut finder = PropertyFinder {
         variable_name: variable_name.to_string(),
@@ -72,7 +75,7 @@ pub fn extract_used_classes(
 
     module.visit_with(&mut finder);
 
-    finder.properties
+    Ok(finder.properties)
 }
 
 struct DefaultCssImportFinder {
@@ -98,8 +101,8 @@ impl Visit for DefaultCssImportFinder {
     }
 }
 
-pub fn extract_default_css_imports(tsx_code: &str) -> HashSet<(String, String)> {
-    let (module, _) = module_parser(tsx_code);
+pub fn extract_default_css_imports(tsx_code: &str) -> anyhow::Result<HashSet<(String, String)>> {
+    let (module, _) = module_parser(tsx_code)?;
 
     let mut finder = DefaultCssImportFinder {
         imported_variables: HashSet::new(),
@@ -107,5 +110,5 @@ pub fn extract_default_css_imports(tsx_code: &str) -> HashSet<(String, String)> 
 
     module.visit_with(&mut finder);
 
-    finder.imported_variables
+    Ok(finder.imported_variables)
 }

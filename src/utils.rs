@@ -10,8 +10,7 @@ pub fn replace_aliases(s: &mut String, aliases: HashMap<String, Vec<String>>) {
         if to.is_empty() {
             continue;
         }
-        let replacement = to.get(0).unwrap();
-        *s = s.replace(&from.replace('*', ""), &replacement.replace('*', ""));
+        *s = s.replace(&from.replace('*', ""), &to[0].replace('*', ""));
     }
 }
 
