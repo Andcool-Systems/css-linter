@@ -69,7 +69,7 @@ fn main() -> Result<()> {
     }
     let tsconfig = get_compiler_options().unwrap_or_else(|e| {
         eprintln!(
-            "\n{}Error{}: Could not load tsconfig.json. Is the provided directory is typescript project? ({})",
+            "\n{}Error{}: Could not load tsconfig.json. Is the provided directory a typescript project? ({})",
             COLOR_RED, COLOR_RESET, e
         );
         process::exit(1);
