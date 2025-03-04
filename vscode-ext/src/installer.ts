@@ -9,6 +9,7 @@ export const binaries: { [key: string]: string } = {
     darwin: 'css-linter-macos',
     win32: 'css-linter-win.exe'
 };
+
 const remote_repo = 'Andcool-Systems/css-linter';
 const url = `https://github.com/${remote_repo}/releases/latest/download`;
 const version_api_url = `https://api.github.com/repos/${remote_repo}/releases/latest`;
@@ -23,10 +24,10 @@ const getLatestVer = async (): Promise<string> => {
     return response.data.tag_name;
 };
 
-const getCurrVer = (exec_path: string): Promise<string> =>
+const getCurrVer = async (exec_path: string): Promise<string> =>
     new Promise((resolve, reject) => {
         exec(`${exec_path} -v`, (error, stdout, stderr) => {
-            if (error || stderr) reject(error || stderr);
+            if (error || stderr) reject(error?.message || stderr);
             resolve(stdout.trim());
         });
     });
@@ -60,7 +61,6 @@ export const install = async () => {
     const exec_path = path.join(homedir, '.css-linter', binary);
     if (!existsSync(exec_path)) {
         mkdirSync(path.join(homedir, '.css-linter'), { recursive: true });
-
         await download(bin_url, exec_path);
     } else {
         const current_ver = await getCurrVer(exec_path);

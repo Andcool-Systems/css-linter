@@ -25,8 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
                 console.error(`[CSS-linter][ERROR]: ${error || stderr}`);
                 return;
             }
-
-            console.log(stdout);
+            console.info(`[CSS-linter][INFO]: ${stdout}`);
 
             diagnosticCollection.clear();
             const error_lines = stdout.split('\n');
@@ -54,6 +53,8 @@ export function activate(context: vscode.ExtensionContext) {
                     message,
                     vscode.DiagnosticSeverity.Warning
                 );
+
+                diagnostic.source = 'next-css-linter';
 
                 const diagnostics = diagnosticsMap.get(filePath) || [];
                 diagnostics.push(diagnostic);
