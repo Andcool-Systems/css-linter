@@ -1,6 +1,6 @@
 {
   "name": "next-css-linter",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Linter for NextJs CSS modules",
   "main": "index.js",
   "scripts": {

@@ -14,14 +14,8 @@ pub struct Properties {
     pub exclude: Vec<String>,
 }
 
-pub fn get_compiler_options() -> Properties {
-    let tsconfig_contents = fs::read_to_string("tsconfig.json")
-        .expect("Could not load tsconfig. Is the provided directory is typescript project?");
+pub fn get_compiler_options() -> anyhow::Result<Properties> {
+    let tsconfig_contents = fs::read_to_string("tsconfig.json")?;
 
-    let v: Properties = match serde_json::from_str(&tsconfig_contents) {
-        Ok(res) => res,
-        Err(err) => panic!("{}", err),
-    };
-
-    v
+    Ok(serde_json::from_str(&tsconfig_contents)?)
 }

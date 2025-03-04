@@ -67,7 +67,13 @@ fn main() -> Result<()> {
         );
         process::exit(1);
     }
-    let tsconfig = get_compiler_options();
+    let tsconfig = get_compiler_options().unwrap_or_else(|e| {
+        eprintln!(
+            "\n{}Error{}: Could not load tsconfig.json. Is the provided directory is typescript project? ({})",
+            COLOR_RED, COLOR_RESET, e
+        );
+        process::exit(1);
+    });
 
     let dir = list_files_in_directory(Path::new(".").to_path_buf(), tsconfig.exclude);
 
