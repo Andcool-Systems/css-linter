@@ -2,7 +2,7 @@
   "name": "next-css-lint",
   "displayName": "Next.Js CSS linter",
   "description": "Displaying unused CSS classes in Next.Js projects",
-  "version": "1.6.2",
+  "version": "1.7.1",
   "license": "MIT",
   "repository": "https://github.com/Andcool-Systems/css-linter",
   "author": {

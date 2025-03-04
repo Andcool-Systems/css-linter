@@ -52,15 +52,30 @@ fn main() -> Result<()> {
     const COLOR_RESET: &str = "\u{001B}[0m";
 
     let args: Vec<String> = env::args().collect();
-    let path = args.get(1).unwrap_or_else(|| {
-        eprintln!(
-            "\n{}Error{}: Linting path must be specified",
-            COLOR_RED, COLOR_RESET
-        );
-        process::exit(1);
-    });
 
-    let minify_output = args.get(2);
+    let path = match args.get(1) {
+        Some(arg) if arg == "-v" => {
+            println!("v{}", env!("CARGO_PKG_VERSION"));
+            process::exit(0);
+        }
+        Some(arg) if arg == "--lint" => args.get(2).unwrap_or_else(|| {
+            eprintln!(
+                "\n{}Error{}: Linting path must be specified",
+                COLOR_RED, COLOR_RESET
+            );
+            process::exit(1);
+        }),
+        Some(arg) => {
+            eprintln!(
+                "{}Error{}: Invalid argument: {}",
+                COLOR_RED, COLOR_RESET, arg
+            );
+            process::exit(1);
+        }
+        None => todo!(),
+    };
+
+    let minify = args.get(3).map_or("", |v| v) == "--minify";
 
     if let Err(e) = env::set_current_dir(Path::new(path)) {
         eprintln!(
@@ -119,7 +134,6 @@ fn main() -> Result<()> {
 
     let mut files_count = 0;
     let mut errors_count = 0;
-    let minify = minify_output.map_or("", |v| v) == "--minify";
 
     for (css_file, mut classes_tsx) in defined_classnames.clone() {
         if let Some(used_css) = used_classnames.get(&css_file) {
