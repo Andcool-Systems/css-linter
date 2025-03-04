@@ -22,6 +22,7 @@ pub fn extract_classes(css_content: &str) -> HashSet<ClassName> {
 
     for (index, line) in css_content.split('\n').enumerate() {
         let stripped_line = line.trim_start();
+        let trimmed_line_indent = line.len() - stripped_line.len();
 
         if stripped_line.starts_with("/*") {
             let comment_content = stripped_line
@@ -54,7 +55,7 @@ pub fn extract_classes(css_content: &str) -> HashSet<ClassName> {
                         defined_classes.insert(ClassName {
                             class_name: buffer.clone(),
                             line_index: index,
-                            column_index: start_index,
+                            column_index: start_index + trimmed_line_indent,
                         });
                     }
                     buffer.clear();
@@ -69,7 +70,7 @@ pub fn extract_classes(css_content: &str) -> HashSet<ClassName> {
                             defined_classes.insert(ClassName {
                                 class_name: buffer.clone(),
                                 line_index: index,
-                                column_index: start_index,
+                                column_index: start_index + trimmed_line_indent,
                             });
                         }
                         buffer.clear();
@@ -82,7 +83,7 @@ pub fn extract_classes(css_content: &str) -> HashSet<ClassName> {
             defined_classes.insert(ClassName {
                 class_name: buffer,
                 line_index: index,
-                column_index: start_index,
+                column_index: start_index + trimmed_line_indent,
             });
         }
     }
