@@ -46,7 +46,7 @@ impl Visit for PropertyFinder {
                         class_name: prop.sym.to_string(),
                         file_name: self.file_name.clone(),
                         line: loc.line,
-                        column: loc.col.0,
+                        column: self.variable_name.len() + loc.col.0,
                     });
                 }
             }

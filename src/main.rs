@@ -60,6 +60,8 @@ fn main() -> Result<()> {
         process::exit(1);
     });
 
+    let minify_output = args.get(2);
+
     if let Err(e) = env::set_current_dir(Path::new(path)) {
         eprintln!(
             "\n{}Error{}: Failed to set current directory: {}",
@@ -109,6 +111,7 @@ fn main() -> Result<()> {
 
     let mut files_count = 0;
     let mut errors_count = 0;
+    let minify = minify_output.map_or("", |v| v) == "--minify";
 
     for (css_file, mut classes_tsx) in defined_classnames.clone() {
         if let Some(used_css) = used_classnames.get(&css_file) {
@@ -124,20 +127,36 @@ fn main() -> Result<()> {
         files_count += 1;
         errors_count += classes_tsx.len();
 
-        println!("{}{}{}", COLOR_BLUE, css_file, COLOR_RESET);
-        for extra in classes_tsx {
-            println!(
-                "{}{}:{}  {}Warn{}: Unused class `{}` found",
-                COLOR_YELLOW,
-                extra.line_index + 1,
-                extra.column_index + 1,
-                COLOR_YELLOW,
-                COLOR_RESET,
-                extra.class_name
-            );
+        if !minify {
+            println!("{}{}{}", COLOR_BLUE, css_file, COLOR_RESET);
         }
 
-        println!();
+        for extra in classes_tsx {
+            if !minify {
+                println!(
+                    "{}{}:{}  {}Warn{}: Unused class `{}` found",
+                    COLOR_YELLOW,
+                    extra.line_index + 1,
+                    extra.column_index + 1,
+                    COLOR_YELLOW,
+                    COLOR_RESET,
+                    extra.class_name
+                );
+            } else {
+                println!(
+                    "{}:{}:{}:{}:Unused class `{}` found",
+                    css_file,
+                    extra.line_index + 1,
+                    extra.column_index + 1,
+                    extra.class_name.len(),
+                    extra.class_name
+                );
+            }
+        }
+
+        if !minify {
+            println!();
+        }
     }
 
     let mut undefined_classes: HashMap<String, HashSet<UsedClassName>> = HashMap::new();
@@ -165,29 +184,46 @@ fn main() -> Result<()> {
     }
 
     for undefined in undefined_classes {
-        println!("{}{}{}", COLOR_BLUE, undefined.0, COLOR_RESET);
+        if !minify {
+            println!("{}{}{}", COLOR_BLUE, undefined.0, COLOR_RESET);
+        }
         for extra in undefined.1 {
-            println!(
-                "{}{}:{}  {}Warn{}: Undefined class `{}` used",
-                COLOR_YELLOW,
-                extra.line,
-                extra.column + 1,
-                COLOR_YELLOW,
-                COLOR_RESET,
-                extra.class_name
-            );
+            if !minify {
+                println!(
+                    "{}{}:{}  {}Warn{}: Undefined class `{}` used",
+                    COLOR_YELLOW,
+                    extra.line,
+                    extra.column + 1,
+                    COLOR_YELLOW,
+                    COLOR_RESET,
+                    extra.class_name
+                );
+            } else {
+                println!(
+                    "{}:{}:{}:{}:Undefined class `{}` used",
+                    undefined.0,
+                    extra.line,
+                    extra.column + 1,
+                    extra.class_name.len(),
+                    extra.class_name
+                );
+            }
         }
 
-        println!();
+        if !minify {
+            println!();
+        }
     }
 
-    if errors_count == 0 {
-        println!("{}✔{} No CSS lint warnings found", COLOR_GREEN, COLOR_RESET);
-    } else {
-        println!(
-            "Found {}{} warnings{} in {} files",
-            COLOR_YELLOW, errors_count, COLOR_RESET, files_count
-        );
+    if !minify {
+        if errors_count == 0 {
+            println!("{}✔{} No CSS lint warnings found", COLOR_GREEN, COLOR_RESET);
+        } else {
+            println!(
+                "Found {}{} warnings{} in {} files",
+                COLOR_YELLOW, errors_count, COLOR_RESET, files_count
+            );
+        }
     }
 
     Ok(())
