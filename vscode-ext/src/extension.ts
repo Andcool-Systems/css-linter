@@ -20,7 +20,7 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        exec(`${exec_path} ${workspacePath} --minify`, (error, stdout, stderr) => {
+        exec(`${exec_path} --lint ${workspacePath} --minify`, (error, stdout, stderr) => {
             if (error || stderr) {
                 console.error(`[CSS-linter][ERROR]: ${error || stderr}`);
                 return;

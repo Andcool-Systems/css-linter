@@ -66,6 +66,10 @@ export const install = async () => {
         const current_ver = await getCurrVer(exec_path);
         const latest_ver = await getLatestVer();
 
+        console.info(
+            `[CSS-linter][INFO]: Current version: ${current_ver} Remote version: ${latest_ver}`
+        );
+
         if (current_ver === latest_ver) {
             return;
         }
