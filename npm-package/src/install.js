@@ -2,6 +2,7 @@ const { writeFileSync, chmodSync, mkdirSync } = require("fs");
 const { join } = require("path");
 const { get } = require("https");
 const os = require("os");
+var pjson = require('../package.json');
 
 const binaries = {
     linux: "css-linter-linux",
@@ -9,10 +10,12 @@ const binaries = {
     win32: "css-linter-win.exe",
 };
 
+let exe_ver = pjson.version.split('.').slice(0, 2).join('.');
+
 const urls = {
-    linux: "https://github.com/Andcool-Systems/css-linter/releases/latest/download/css-linter-linux",
-    darwin: "https://github.com/Andcool-Systems/css-linter/releases/latest/download/css-linter-macos",
-    win32: "https://github.com/Andcool-Systems/css-linter/releases/latest/download/css-linter-win.exe",
+    linux: `https://github.com/Andcool-Systems/css-linter/releases/download/v${exe_ver}/css-linter-linux`,
+    darwin: `https://github.com/Andcool-Systems/css-linter/releases/download/v${exe_ver}/css-linter-macos`,
+    win32: `https://github.com/Andcool-Systems/css-linter/releases/download/v${exe_ver}/css-linter-win.exe`,
 };
 
 const platform = os.platform();
