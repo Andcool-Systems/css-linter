@@ -156,7 +156,7 @@ fn main() -> Result<()> {
         for extra in classes_tsx {
             if !minify {
                 println!(
-                    "{}{}:{}  {}Warn{}: Unused class `{}` found",
+                    "{}{}:{}  {}Warn{}: Unused class `{}` found.",
                     COLOR_YELLOW,
                     extra.line_index + 1,
                     extra.column_index + 1,
@@ -166,7 +166,7 @@ fn main() -> Result<()> {
                 );
             } else {
                 println!(
-                    "{}:{}:{}:{}:Unused class `{}` found",
+                    "{}:{}:{}:{}:\"{}\": Unused class found.",
                     css_file,
                     extra.line_index + 1,
                     extra.column_index + 1,
@@ -212,7 +212,7 @@ fn main() -> Result<()> {
         for extra in undefined.1 {
             if !minify {
                 println!(
-                    "{}{}:{}  {}Warn{}: Undefined class `{}` used",
+                    "{}{}:{}  {}Warn{}: Undefined class `{}` was used.",
                     COLOR_YELLOW,
                     extra.line,
                     extra.column + 1,
@@ -222,7 +222,7 @@ fn main() -> Result<()> {
                 );
             } else {
                 println!(
-                    "{}:{}:{}:{}:Undefined class `{}` used",
+                    "{}:{}:{}:{}:\"{}\": Undefined class was used.",
                     undefined.0,
                     extra.line,
                     extra.column + 1,
