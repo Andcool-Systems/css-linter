@@ -173,7 +173,8 @@ export class CssModuleDefinitionProvider implements vscode.DefinitionProvider {
         const lines = fileContent.split('\n');
 
         for (let i = 0; i < lines.length; i++) {
-            if (lines[i].includes(`.${propertyName}`)) {
+            let line = lines[i].trimStart();
+            if (line.match(new RegExp(`\\.${propertyName}(?![a-zA-Z0-9-_])`))) {
                 const definitionUri = vscode.Uri.file(resolvedPath);
                 const definitionPosition = new vscode.Position(i, 0);
                 return new vscode.Location(definitionUri, definitionPosition);

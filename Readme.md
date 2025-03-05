@@ -6,7 +6,8 @@ A tool for analyzing CSS modules in Next.js projects. The linter detects **unuse
 - Project-wide analysis with warnings displayed in the editor  
 - High performance thanks to Rust-based implementation  
 - Support for `import aliases` from `tsconfig.json`  
-- Ability to ignore specific warnings  
+- Ability to ignore specific warnings
+- Find definitions for your CSS classes  
 
 ## 🔹 Usage  
 Linting runs automatically **on file save**, and warnings are displayed in the workspace.  
