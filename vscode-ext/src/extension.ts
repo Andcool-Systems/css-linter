@@ -172,16 +172,18 @@ export class CssModuleDefinitionProvider implements vscode.DefinitionProvider {
         const fileContent = readFileSync(resolvedPath, 'utf-8');
         const lines = fileContent.split('\n');
 
+        const definitions: vscode.Location[] = [];
+
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i].trimStart();
             if (line.match(new RegExp(`\\.${propertyName}(?![a-zA-Z0-9-_])`))) {
                 const definitionUri = vscode.Uri.file(resolvedPath);
                 const definitionPosition = new vscode.Position(i, 0);
-                return new vscode.Location(definitionUri, definitionPosition);
+                definitions.push(new vscode.Location(definitionUri, definitionPosition));
             }
         }
 
-        return null;
+        return definitions;
     }
 
     private resolveImportPath(document: vscode.TextDocument, importPath: string): string | null {
