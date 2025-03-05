@@ -1,4 +1,4 @@
-import { chmodSync, createWriteStream, existsSync, mkdirSync, unlink, unlinkSync } from 'fs';
+import { chmodSync, createWriteStream, existsSync, mkdirSync, unlinkSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import axios from 'axios';
@@ -67,7 +67,7 @@ export const install = async () => {
         const latest_ver = await getLatestVer();
 
         console.info(
-            `[CSS-linter][INFO]: Current version: ${current_ver} Remote version: ${latest_ver}`
+            `[CSS-linter][INFO]: Local linter version: ${current_ver} Latest linter version: ${latest_ver}`
         );
 
         if (current_ver === latest_ver) {

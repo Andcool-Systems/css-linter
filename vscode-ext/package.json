@@ -2,7 +2,7 @@
   "name": "next-css-lint",
   "displayName": "Next.Js CSS linter",
   "description": "Display unused CSS classes in Next.Js projects and search for class definitions",
-  "version": "1.7.5",
+  "version": "1.7.6",
   "license": "MIT",
   "repository": "https://github.com/Andcool-Systems/css-linter",
   "author": {
@@ -13,6 +13,31 @@
   "publisher": "AndcoolSystems",
   "engines": {
     "vscode": "^1.92.0"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "next-css-lint.enable",
+        "title": "Next.Js CSS linter: Enable"
+      },
+      {
+        "command": "next-css-lint.disable",
+        "title": "Next.Js CSS linter: Disable"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "Next.Js CSS linter configuration",
+        "type": "object",
+        "properties": {
+          "next-css-lint.enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable Next.Js CSS linter in current workplace"
+          }
+        }
+      }
+    ]
   },
   "categories": [
     "Linters"
