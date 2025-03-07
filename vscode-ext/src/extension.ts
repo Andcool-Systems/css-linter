@@ -1,42 +1,79 @@
 import * as vscode from 'vscode';
-import { join } from 'path';
-import { binaries, install } from './installer';
-import os from 'os';
-import { CssModuleDefinitionProvider } from './definition.provider';
-import { CssFixProvider } from './fix.provider';
+import { install } from './installer';
+import { CssModuleDefinitionProvider } from './definitions';
+import { CssFixProvider } from './diagnostics/fix.provider';
 import { run_diag } from './diagnostics';
+import { CssCompletionProvider } from './autocomplete';
+import { CSSHoverProvider } from './hover';
+import { convert_css } from './convert';
+
+const fileFilter = [
+    { scheme: 'file', language: 'javascriptreact' },
+    { scheme: 'file', language: 'typescriptreact' }
+];
 
 export function activate(context: vscode.ExtensionContext) {
     const diagnosticCollection = vscode.languages.createDiagnosticCollection('css-linter-diags');
     const config = vscode.workspace.getConfiguration('next-css-lint');
     const enabled = config.get<boolean>('enabled', true);
 
-    const platform = os.platform();
-    const binary = binaries[platform];
-    const homedir = os.homedir();
-    const exec_path = join(homedir, '.css-linter', binary);
-
-    const fixProvider = new CssFixProvider(diagnosticCollection);
-    let save_evt = vscode.workspace.onDidSaveTextDocument(() =>
-        run_diag(exec_path, diagnosticCollection)
-    );
-    let code_action = vscode.languages.registerCodeActionsProvider('css', fixProvider, {
+    const fix_provider = new CssFixProvider(diagnosticCollection);
+    const code_action_type = {
         providedCodeActionKinds: [vscode.CodeActionKind.QuickFix]
-    });
+    };
+    const css_definition = new CssModuleDefinitionProvider();
+    const css_completion = new CssCompletionProvider();
+    const css_hover = new CSSHoverProvider();
+
+    let save_evt = vscode.workspace.onDidSaveTextDocument(() => run_diag(diagnosticCollection));
+    let code_action = vscode.languages.registerCodeActionsProvider(
+        'css',
+        fix_provider,
+        code_action_type
+    );
+    let definition_provider = vscode.languages.registerDefinitionProvider(
+        fileFilter,
+        css_definition
+    );
+    let completion_provider = vscode.languages.registerCompletionItemProvider(
+        fileFilter,
+        css_completion,
+        '.'
+    );
+    let hover_provider = vscode.languages.registerHoverProvider(fileFilter, css_hover);
+    let extractor = vscode.commands.registerCommand('next-css-lint.convert-inline', convert_css);
 
     const enable_command = vscode.commands.registerCommand('next-css-lint.enable', async () => {
         await config.update('enabled', true, vscode.ConfigurationTarget.Workspace);
-        save_evt = vscode.workspace.onDidSaveTextDocument(() =>
-            run_diag(exec_path, diagnosticCollection)
+        save_evt = vscode.workspace.onDidSaveTextDocument(() => run_diag(diagnosticCollection));
+        hover_provider = vscode.languages.registerHoverProvider(fileFilter, css_hover);
+        extractor = vscode.commands.registerCommand('next-css-lint.convert-inline', convert_css);
+        code_action = vscode.languages.registerCodeActionsProvider(
+            'css',
+            fix_provider,
+            code_action_type
         );
-        code_action = vscode.languages.registerCodeActionsProvider('css', fixProvider, {
-            providedCodeActionKinds: [vscode.CodeActionKind.QuickFix]
-        });
+        definition_provider = vscode.languages.registerDefinitionProvider(
+            fileFilter,
+            css_definition
+        );
+        completion_provider = vscode.languages.registerCompletionItemProvider(
+            fileFilter,
+            css_completion,
+            '.'
+        );
 
         install()
             .then(() => {
-                context.subscriptions.push(save_evt, code_action);
-                run_diag(exec_path, diagnosticCollection);
+                context.subscriptions.push(
+                    save_evt,
+                    code_action,
+                    definition_provider,
+                    completion_provider,
+                    hover_provider,
+                    extractor
+                );
+                run_diag(diagnosticCollection);
             })
             .catch(e => console.error(`[CSS-linter][ERROR]: ${e}`));
     });
@@ -46,21 +83,27 @@ export function activate(context: vscode.ExtensionContext) {
 
         save_evt.dispose();
         code_action.dispose();
+        definition_provider.dispose();
+        completion_provider.dispose();
+        hover_provider.dispose();
+        extractor.dispose();
         diagnosticCollection.clear();
     });
 
-    const provider = vscode.languages.registerDefinitionProvider(
-        { scheme: 'file', language: 'typescriptreact' },
-        new CssModuleDefinitionProvider()
-    );
-
-    context.subscriptions.push(diagnosticCollection, enable_command, disable_command, provider);
+    context.subscriptions.push(diagnosticCollection, enable_command, disable_command);
 
     if (enabled) {
         install()
             .then(() => {
-                context.subscriptions.push(save_evt, code_action);
-                run_diag(exec_path, diagnosticCollection);
+                context.subscriptions.push(
+                    save_evt,
+                    code_action,
+                    definition_provider,
+                    completion_provider,
+                    hover_provider,
+                    extractor
+                );
+                run_diag(diagnosticCollection);
             })
             .catch(e => console.error(`[CSS-linter][ERROR]: ${e}`));
     }

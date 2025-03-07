@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fs,
     path::{Component, Path, PathBuf},
 };
 
@@ -39,4 +40,32 @@ pub fn process_relative_import(requester_path: &Path, destination_path: &mut Str
     }
 
     Ok(())
+}
+
+pub fn list_files_in_directory(path: PathBuf, exclude: Vec<String>) -> Vec<String> {
+    let mut files = Vec::new();
+
+    if let Ok(entries) = fs::read_dir(&path) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+
+            if path.is_dir() {
+                if let Some(p) = path.file_name() {
+                    let p_str = p.to_string_lossy();
+                    if p_str.starts_with('.') || exclude.iter().any(|i| p_str == *i) {
+                        continue;
+                    }
+                }
+                files.extend(list_files_in_directory(path, exclude.clone()));
+            } else if path.is_file() {
+                if let Some(path_str) = path.to_str() {
+                    files.push(path_str.to_string());
+                }
+            }
+        }
+    } else {
+        eprintln!("Cannot open target dir: {:?}", path);
+    }
+
+    files
 }

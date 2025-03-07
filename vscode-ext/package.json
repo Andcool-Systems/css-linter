@@ -2,7 +2,7 @@
   "name": "next-css-lint",
   "displayName": "Next.Js CSS linter",
   "description": "Display unused CSS classes in Next.Js projects and search for class definitions",
-  "version": "1.7.6",
+  "version": "1.8.0",
   "license": "MIT",
   "repository": "https://github.com/Andcool-Systems/css-linter",
   "author": {
@@ -23,6 +23,10 @@
       {
         "command": "next-css-lint.disable",
         "title": "Next.Js CSS linter: Disable"
+      },
+      {
+        "command": "next-css-lint.convert-inline",
+        "title": "Extract inline styles into CSS module"
       }
     ],
     "configuration": [
@@ -37,7 +41,15 @@
           }
         }
       }
-    ]
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "next-css-lint.convert-inline",
+          "group": "5_cutcopypaste"
+        }
+      ]
+    }
   },
   "categories": [
     "Linters"
@@ -66,6 +78,7 @@
     "typescript": "5.8.2"
   },
   "dependencies": {
-    "axios": "^1.8.1"
+    "axios": "^1.8.1",
+    "json5": "^2.2.3"
   }
 }

@@ -2,7 +2,7 @@ import { chmodSync, createWriteStream, existsSync, mkdirSync, unlinkSync } from 
 import os from 'os';
 import path from 'path';
 import axios from 'axios';
-import { exec } from 'child_process';
+import { execAsync } from './utils';
 
 export const binaries: { [key: string]: string } = {
     linux: 'css-linter-linux',
@@ -23,14 +23,6 @@ const getLatestVer = async (): Promise<string> => {
 
     return response.data.tag_name;
 };
-
-const getCurrVer = async (exec_path: string): Promise<string> =>
-    new Promise((resolve, reject) => {
-        exec(`${exec_path} -v`, (error, stdout, stderr) => {
-            if (error || stderr) reject(error?.message || stderr);
-            resolve(stdout.trim());
-        });
-    });
 
 const download = (file_path: string, file_name: string): Promise<void> =>
     new Promise<void>((resolve, reject) => {
@@ -63,14 +55,14 @@ export const install = async () => {
         mkdirSync(path.join(homedir, '.css-linter'), { recursive: true });
         await download(bin_url, exec_path);
     } else {
-        const current_ver = await getCurrVer(exec_path);
+        const current_ver = await execAsync(`${exec_path} -v`);
         const latest_ver = await getLatestVer();
 
         console.info(
-            `[CSS-linter][INFO]: Local linter version: ${current_ver} Latest linter version: ${latest_ver}`
+            `[CSS-linter][INFO]: Local linter version: ${current_ver.trim()} Latest linter version: ${latest_ver}`
         );
 
-        if (current_ver === latest_ver) {
+        if (current_ver.trim() === latest_ver) {
             return;
         }
 
