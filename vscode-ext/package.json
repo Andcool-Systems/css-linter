@@ -1,8 +1,8 @@
 {
   "name": "next-css-lint",
   "displayName": "Next.Js CSS linter",
-  "description": "Display unused CSS classes in Next.Js projects and search for class definitions",
-  "version": "1.8.0",
+  "description": "A Rust-based VSCode extension that adds tools for working with CSS modules in React and Next.Js",
+  "version": "1.8.2",
   "license": "MIT",
   "repository": "https://github.com/Andcool-Systems/css-linter",
   "author": {
