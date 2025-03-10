@@ -3,7 +3,7 @@ use std::env;
 use anyhow::Result;
 use modules::{
     css_class::get_class_body, defined_classes::get_defined_classes, help::print_help, linter,
-    styles_imports::get_styles_imports, version::get_version,
+    styles_imports::get_styles_imports, used_css::get_class_usages, version::get_version,
 };
 
 mod config;
@@ -23,6 +23,7 @@ fn main() -> Result<()> {
         Some(arg) if arg == "--imports" => get_styles_imports()?,
         Some(arg) if arg == "--classes" => get_defined_classes()?,
         Some(arg) if arg == "--class" => get_class_body()?,
+        Some(arg) if arg == "--usages" => get_class_usages()?,
         Some(_) => print_help(),
         None => print_help(),
     };

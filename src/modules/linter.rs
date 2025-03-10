@@ -23,7 +23,7 @@ pub fn lint() -> Result<()> {
     let args: Vec<String> = env::args().collect();
 
     let path = args.get(2).unwrap_or_else(|| {
-        eprintln!("Path to the file must be provided");
+        eprintln!("Path to the workplace must be provided");
         process::exit(1);
     });
 

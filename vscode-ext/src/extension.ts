@@ -6,6 +6,7 @@ import { run_diag } from './diagnostics';
 import { CssCompletionProvider } from './autocomplete';
 import { CSSHoverProvider } from './hover';
 import { convert_css } from './convert';
+import { CSSReferenceProvider } from './usages';
 
 const fileFilter = [
     { scheme: 'file', language: 'javascriptreact' },
@@ -24,6 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
     const css_definition = new CssModuleDefinitionProvider();
     const css_completion = new CssCompletionProvider();
     const css_hover = new CSSHoverProvider();
+    const css_references = new CSSReferenceProvider();
 
     let save_evt = vscode.workspace.onDidSaveTextDocument(() => run_diag(diagnosticCollection));
     let code_action = vscode.languages.registerCodeActionsProvider(
@@ -42,12 +44,14 @@ export function activate(context: vscode.ExtensionContext) {
     );
     let hover_provider = vscode.languages.registerHoverProvider(fileFilter, css_hover);
     let extractor = vscode.commands.registerCommand('next-css-lint.convert-inline', convert_css);
+    let css_reference_provider = vscode.languages.registerReferenceProvider('css', css_references);
 
     const enable_command = vscode.commands.registerCommand('next-css-lint.enable', async () => {
         await config.update('enabled', true, vscode.ConfigurationTarget.Workspace);
         save_evt = vscode.workspace.onDidSaveTextDocument(() => run_diag(diagnosticCollection));
         hover_provider = vscode.languages.registerHoverProvider(fileFilter, css_hover);
         extractor = vscode.commands.registerCommand('next-css-lint.convert-inline', convert_css);
+        css_reference_provider = vscode.languages.registerReferenceProvider('css', css_references);
         code_action = vscode.languages.registerCodeActionsProvider(
             'css',
             fix_provider,
@@ -71,7 +75,8 @@ export function activate(context: vscode.ExtensionContext) {
                     definition_provider,
                     completion_provider,
                     hover_provider,
-                    extractor
+                    extractor,
+                    css_reference_provider
                 );
                 run_diag(diagnosticCollection);
             })
@@ -101,7 +106,8 @@ export function activate(context: vscode.ExtensionContext) {
                     definition_provider,
                     completion_provider,
                     hover_provider,
-                    extractor
+                    extractor,
+                    css_reference_provider
                 );
                 run_diag(diagnosticCollection);
             })
