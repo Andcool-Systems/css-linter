@@ -8,6 +8,15 @@ fn is_first_char_numeric(buffer: &str) -> bool {
     buffer.chars().next().map_or(false, |c| c.is_numeric())
 }
 
+fn contains_forbidden_characters(string: &str) -> bool {
+    string
+        .chars()
+        .filter(|char| ['\'', '"', '=', '(', '['].contains(char))
+        .collect::<Vec<char>>()
+        .len()
+        != 0
+}
+
 #[derive(Eq, Hash, PartialEq, Clone)]
 pub struct ClassName {
     pub class_name: String,
@@ -15,6 +24,7 @@ pub struct ClassName {
     pub column_index: usize,
 }
 
+// TODO: Do normal CSS parser
 pub fn extract_classes(css_content: &str) -> HashSet<ClassName> {
     let mut defined_classes: HashSet<ClassName> = HashSet::new();
     const DISABLE_RULE_FLAG: &str = "css-lint-disable-rule ";
@@ -41,12 +51,12 @@ pub fn extract_classes(css_content: &str) -> HashSet<ClassName> {
             continue;
         }
 
-        if !stripped_line.starts_with('.') {
+        if !stripped_line.contains('.') || contains_forbidden_characters(stripped_line) {
             continue;
         }
 
         let mut buffer: String = String::new();
-        let mut is_class = true;
+        let mut is_class = false;
         let mut start_index = 0;
         for (column_index, symbol) in stripped_line.chars().enumerate() {
             match symbol {
