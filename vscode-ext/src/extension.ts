@@ -7,10 +7,17 @@ import { CssCompletionProvider } from './autocomplete';
 import { CSSHoverProvider } from './hover';
 import { convert_css } from './convert';
 import { CSSReferenceProvider } from './usages';
+import { DotenvCompletionProvider } from './autocomplete/dotenv';
 
 const fileFilter = [
     { scheme: 'file', language: 'javascriptreact' },
     { scheme: 'file', language: 'typescriptreact' }
+];
+
+const fileFilterAll = [
+    ...fileFilter,
+    { scheme: 'file', language: 'javascript' },
+    { scheme: 'file', language: 'typescript' }
 ];
 
 export function activate(context: vscode.ExtensionContext) {
@@ -24,6 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
     };
     const css_definition = new CssModuleDefinitionProvider();
     const css_completion = new CssCompletionProvider();
+    const dotenv_completion = new DotenvCompletionProvider();
     const css_hover = new CSSHoverProvider();
     const css_references = new CSSReferenceProvider();
 
@@ -42,6 +50,12 @@ export function activate(context: vscode.ExtensionContext) {
         css_completion,
         '.'
     );
+    const dotenv_completion_provider = vscode.languages.registerCompletionItemProvider(
+        fileFilterAll,
+        dotenv_completion,
+        '.'
+    );
+
     let hover_provider = vscode.languages.registerHoverProvider(fileFilter, css_hover);
     let extractor = vscode.commands.registerCommand('next-css-lint.convert-inline', convert_css);
     let css_reference_provider = vscode.languages.registerReferenceProvider('css', css_references);
@@ -95,7 +109,12 @@ export function activate(context: vscode.ExtensionContext) {
         diagnosticCollection.clear();
     });
 
-    context.subscriptions.push(diagnosticCollection, enable_command, disable_command);
+    context.subscriptions.push(
+        diagnosticCollection,
+        enable_command,
+        disable_command,
+        dotenv_completion_provider
+    );
 
     if (enabled) {
         install()
@@ -116,4 +135,3 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {}
-

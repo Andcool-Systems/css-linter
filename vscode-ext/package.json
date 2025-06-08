@@ -2,7 +2,7 @@
   "name": "next-css-lint",
   "displayName": "Next.Js CSS linter",
   "description": "A Rust-based VSCode extension that adds tools for working with CSS modules in React and Next.Js",
-  "version": "1.8.3",
+  "version": "1.8.5",
   "license": "MIT",
   "repository": "https://github.com/Andcool-Systems/css-linter",
   "author": {
@@ -79,6 +79,7 @@
   },
   "dependencies": {
     "axios": "^1.8.1",
+    "dotenv": "^16.5.0",
     "json5": "^2.2.3"
   }
 }
