@@ -20,7 +20,7 @@ export class DotenvCompletionProvider implements vscode.CompletionItemProvider {
     ): Promise<vscode.CompletionItem[] | null | undefined> {
         const line = document.lineAt(position);
         const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        if (!line.text.includes('process.env') || !workspacePath) return;
+        if (!line.text.endsWith('process.env.') || !workspacePath) return;
 
         return getEnvKeys(workspacePath).map(key => {
             const item = new vscode.CompletionItem(key, vscode.CompletionItemKind.Variable);
