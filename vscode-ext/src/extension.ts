@@ -7,7 +7,6 @@ import { CssCompletionProvider } from './autocomplete';
 import { CSSHoverProvider } from './hover';
 import { convert_css } from './convert';
 import { CSSReferenceProvider } from './usages';
-import { DotenvCompletionProvider } from './autocomplete/dotenv';
 
 const fileFilter = [
     { scheme: 'file', language: 'javascriptreact' },
@@ -31,7 +30,6 @@ export function activate(context: vscode.ExtensionContext) {
     };
     const css_definition = new CssModuleDefinitionProvider();
     const css_completion = new CssCompletionProvider();
-    const dotenv_completion = new DotenvCompletionProvider();
     const css_hover = new CSSHoverProvider();
     const css_references = new CSSReferenceProvider();
 
@@ -48,11 +46,6 @@ export function activate(context: vscode.ExtensionContext) {
     let completion_provider = vscode.languages.registerCompletionItemProvider(
         fileFilter,
         css_completion,
-        '.'
-    );
-    const dotenv_completion_provider = vscode.languages.registerCompletionItemProvider(
-        fileFilterAll,
-        dotenv_completion,
         '.'
     );
 
@@ -109,12 +102,7 @@ export function activate(context: vscode.ExtensionContext) {
         diagnosticCollection.clear();
     });
 
-    context.subscriptions.push(
-        diagnosticCollection,
-        enable_command,
-        disable_command,
-        dotenv_completion_provider
-    );
+    context.subscriptions.push(diagnosticCollection, enable_command, disable_command);
 
     if (enabled) {
         install()

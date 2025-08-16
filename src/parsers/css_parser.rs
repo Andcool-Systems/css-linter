@@ -17,7 +17,7 @@ fn contains_forbidden_characters(string: &str) -> bool {
         != 0
 }
 
-#[derive(Eq, Hash, PartialEq, Clone)]
+#[derive(Eq, Hash, PartialEq, Clone, Debug)]
 pub struct ClassName {
     pub class_name: String,
     pub line_index: usize,
